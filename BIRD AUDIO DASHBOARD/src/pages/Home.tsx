@@ -4,8 +4,21 @@ import './Home.css';
 import '../App.css';
 import aviearDevice from '../assets/aviear_device.png';
 import aviearAssembly from '../assets/aviear_assembly.png';
+import deployment1 from '../assets/images/1.jpeg';
+import deployment2 from '../assets/images/2.jpeg';
+import deployment3 from '../assets/images/3.jpeg';
+import deployment4 from '../assets/images/4.jpeg';
+import deployment5 from '../assets/images/5.jpeg';
+import deployment6 from '../assets/images/6.jpeg';
 
-
+const deploymentImages = [
+  { src: deployment1, alt: 'Deployment 1' },
+  { src: deployment2, alt: 'Deployment 2' },
+  { src: deployment3, alt: 'Deployment 3' },
+  { src: deployment4, alt: 'Deployment 4' },
+  { src: deployment5, alt: 'Deployment 5' },
+  { src: deployment6, alt: 'Deployment 6' },
+];
 
 export default function Home() {
   const navigate = useNavigate();
@@ -20,6 +33,7 @@ export default function Home() {
         </div>
         <div className="nav-actions">
           <ul className="nav-links">
+            <li><a href="#deployment" className="nav-link">Deployment</a></li>
           </ul>
           <button className="nav-cta" onClick={() => navigate('/dashboard')}>
             Live Data <ArrowRight size={18} />
@@ -117,8 +131,24 @@ export default function Home() {
           </div>
         </div>
       </section>
-      
 
+      {/* Deployment Section */}
+      <section id="deployment" className="deployment-section">
+        <div className="section-header text-center">
+          <h2 className="section-title">Deployment <span className="highlight">Scenarios</span></h2>
+          <p className="section-subtitle">Visualizing real-world applications and installations.</p>
+        </div>
+        <div className="deployment-grid">
+          {deploymentImages.map((img, idx) => (
+            <div key={idx} className="deployment-card">
+              <div className="deployment-image-wrapper">
+                <img src={img.src} alt={img.alt} className="deployment-image" loading="lazy" />
+              </div>
+              <div className="deployment-caption">{img.alt}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <footer className="home-footer">
         <p>© AviEar Acoustic Systems. All rights reserved.</p>
