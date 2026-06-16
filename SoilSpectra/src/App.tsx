@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import './index.css';
+import { AnalyticsView } from './components/AnalyticsView';
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,6 +64,12 @@ export default function App() {
             onClick={() => { setActiveTab('overview'); setSidebarOpen(false); }}
           >
             📊 Overview
+          </div>
+          <div 
+            className={`nav-item ${activeTab === 'analytics' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('analytics'); setSidebarOpen(false); }}
+          >
+            🔬 Live Analytics
           </div>
           <div 
             className={`nav-item ${activeTab === 'specs' ? 'active' : ''}`}
@@ -191,6 +198,12 @@ export default function App() {
                   </tbody>
                 </table>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'analytics' && (
+            <div className="animate-fade-in" style={{ height: '100%', minHeight: '600px' }}>
+              <AnalyticsView />
             </div>
           )}
         </div>
