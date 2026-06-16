@@ -59,10 +59,10 @@ export const AnalyticsView: React.FC = () => {
       </div>
 
       {/* Main Grid Layout */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '1.5rem', flex: 1, minHeight: 0 }}>
+      <div className="analytics-grid">
         
         {/* Analysis Core (Left) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto', paddingRight: '0.5rem' }}>
+        <div className="analysis-core">
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-0.5rem' }}>
             <h3 style={{ margin: 0 }}>Spectral & Chemical Analysis</h3>
@@ -72,7 +72,7 @@ export const AnalyticsView: React.FC = () => {
             sample={activeSample} 
           />
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="dials-grid">
             <NutrientDials 
               N={activeSample?.N || 0} 
               P={activeSample?.P || 0} 
@@ -84,7 +84,7 @@ export const AnalyticsView: React.FC = () => {
         </div>
 
         {/* History Feed (Right) */}
-        <div style={{ height: '100%' }}>
+        <div className="history-feed">
           <HistoryFeed 
             samples={samples} 
             activeSampleId={activeSample?.id || null} 

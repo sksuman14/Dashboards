@@ -68,7 +68,7 @@ export const NutrientDials: React.FC<NutrientDialsProps> = ({ N, P, K }) => {
   };
 
   return (
-    <div className="widget" style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'center', padding: '2rem' }}>
+    <div className="widget" style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-around', alignItems: 'center', padding: '2rem', gap: '1rem' }}>
       <Dial label="Nitrogen (N)" value={N} max={MAX_N} color={getColor(N, MAX_N)} />
       <Dial label="Phosphorus (P)" value={P} max={MAX_P} color={getColor(P, MAX_P)} />
       <Dial label="Potassium (K)" value={K} max={MAX_K} color={getColor(K, MAX_K)} />
