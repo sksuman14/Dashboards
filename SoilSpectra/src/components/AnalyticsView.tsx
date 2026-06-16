@@ -8,9 +8,7 @@ import { HistoryFeed } from './HistoryFeed';
 export const AnalyticsView: React.FC = () => {
   const [samples, setSamples] = useState<SoilSample[]>([]);
   const [activeSample, setActiveSample] = useState<SoilSample | null>(null);
-  const [compareSample, setCompareSample] = useState<SoilSample | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [showCompare, setShowCompare] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState("Faridabad");
   const regions = ["All", "Faridabad", "Uttar Pradesh", "Rajasthan", "Punjab", "Meerut", "Himachal Pradesh", "Haryana"];
 
@@ -27,11 +25,8 @@ export const AnalyticsView: React.FC = () => {
         setSamples(res.samples);
         if (res.samples.length > 0) {
           setActiveSample(res.samples[0]);
-          const clay = res.samples.find(s => s.soil_texture === 'Clay');
-          setCompareSample(clay || null);
         } else {
           setActiveSample(null);
-          setCompareSample(null);
         }
       } catch (error) {
         console.error("Failed to load data:", error);
@@ -71,15 +66,10 @@ export const AnalyticsView: React.FC = () => {
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '-0.5rem' }}>
             <h3 style={{ margin: 0 }}>Spectral & Chemical Analysis</h3>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={showCompare} onChange={(e) => setShowCompare(e.target.checked)} />
-              Show Reference Overlay
-            </label>
           </div>
 
           <SpectralChart 
             sample={activeSample} 
-            compareSample={showCompare ? compareSample : null} 
           />
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
