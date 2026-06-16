@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ArrowRight, Cpu, MemoryStick, ActivitySquare, BarChart3, Cloud, Shield } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import './Home.css';
@@ -22,6 +23,15 @@ const deploymentImages = [
 
 export default function Home() {
   const navigate = useNavigate();
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const nextSlide = () => {
+    setActiveIndex((prev) => (prev + 1) % deploymentImages.length);
+  };
+
+  const prevSlide = () => {
+    setActiveIndex((prev) => (prev - 1 + deploymentImages.length) % deploymentImages.length);
+  };
 
   return (
     <div className="home-container">
@@ -104,7 +114,7 @@ export default function Home() {
       {/* Features Section */}
       <section id="capabilities" className="features-section">
         <h2 className="section-title text-center">Core Capabilities</h2>
-        
+
         <div className="features-grid">
           <div className="feature-card">
             <div className="feature-icon-wrapper">
@@ -138,7 +148,9 @@ export default function Home() {
           <h2 className="section-title">Deployment <span className="highlight">Scenarios</span></h2>
           <p className="section-subtitle">Visualizing real-world applications and installations.</p>
         </div>
-        <div className="deployment-grid">
+        
+        {/* Desktop & Tablet Grid */}
+        <div className="deployment-grid desktop-only">
           {deploymentImages.map((img, idx) => (
             <div key={idx} className="deployment-card">
               <div className="deployment-image-wrapper">
@@ -147,6 +159,50 @@ export default function Home() {
               <div className="deployment-caption">{img.alt}</div>
             </div>
           ))}
+        </div>
+
+        {/* Mobile Slide-by-Slide Carousel */}
+        <div className="deployment-carousel-mobile mobile-only">
+          <div className="carousel-window">
+            <div className="carousel-track" style={{
+              width: `${deploymentImages.length * 100}%`,
+              transform: `translateX(-${(activeIndex * 100) / deploymentImages.length}%)`
+            }}>
+              {deploymentImages.map((img, idx) => (
+                <div key={idx} className="carousel-slide" style={{
+                  width: `${100 / deploymentImages.length}%`,
+                  flex: `0 0 ${100 / deploymentImages.length}%`
+                }}>
+                  <div className="deployment-card">
+                    <div className="deployment-image-wrapper">
+                      <img src={img.src} alt={img.alt} className="deployment-image" loading="lazy" />
+                    </div>
+                    <div className="deployment-caption">{img.alt}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Controls */}
+          <div className="carousel-controls">
+            <button className="carousel-btn prev" onClick={prevSlide} aria-label="Previous slide">
+              &larr;
+            </button>
+            <div className="carousel-dots">
+              {deploymentImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  className={`carousel-dot ${idx === activeIndex ? 'active' : ''}`}
+                  onClick={() => setActiveIndex(idx)}
+                  aria-label={`Go to slide ${idx + 1}`}
+                />
+              ))}
+            </div>
+            <button className="carousel-btn next" onClick={nextSlide} aria-label="Next slide">
+              &rarr;
+            </button>
+          </div>
         </div>
       </section>
 
