@@ -546,7 +546,7 @@ function App() {
                 </div>
 
                 {/* Displaying physics calculation parameters inline */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                <div className="sandbox-physics-grid">
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', fontWeight: 800, textTransform: 'uppercase' }}>N ➔ S Pulse Time</span>
                     <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-primary)', marginTop: '2px' }}>{tofNS} μs</span>
@@ -796,7 +796,8 @@ function App() {
                       </div>
                       
                       <div 
-                        style={{ flex: 1, padding: '2rem 2rem 1rem 0.5rem', position: 'relative', userSelect: 'none' }} 
+                        className="chart-container"
+                        style={{ padding: '2rem 2rem 1rem 0.5rem', position: 'relative', userSelect: 'none' }} 
                         onWheelCapture={zoomPan.handleWheel}
                         onMouseDownCapture={zoomPan.handleMouseDown}
                         onMouseMoveCapture={zoomPan.handleMouseMove}
@@ -967,7 +968,7 @@ function App() {
               </div>
             </div>
             
-            <div className="floating-card" style={{ marginTop: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.75rem 2.5rem' }}>
+            <div className="floating-card specs-download-card">
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                 <FileText size={28} style={{ color: 'var(--primary)' }} />
                 <div>

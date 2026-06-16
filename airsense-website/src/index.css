@@ -126,6 +126,8 @@ header {
 nav {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 nav button {
@@ -234,5 +236,12 @@ footer {
   }
   main {
     padding: 16px;
+  }
+  .logo-text {
+    font-size: 20px;
+  }
+  nav button {
+    font-size: 13px;
+    padding: 6px 12px;
   }
 }

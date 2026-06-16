@@ -575,10 +575,6 @@ function App() {
           <div>
             <div className="hero-section">
               <div className="hero-content">
-                <div className="hero-badge">
-                  <Activity size={15} />
-                  <span>Now In Field Testing</span>
-                </div>
                 <h1 className="hero-title">Intelligent CO₂ & Air Quality Monitoring</h1>
                 <p className="hero-subtitle">
                   A high-precision, low-power industrial IoT device designed for workspaces, greenhouses, and livestock. Combines Non-Dispersive Infrared (NDIR) sensing, LTE Cat-1 cloud integration, and local visual safety indication.
@@ -1309,7 +1305,7 @@ function App() {
           
           <div className="footer-bottom">
             <span className="footer-copyright">
-              © 2026 AirSense Systems. All rights reserved.
+              © AirSense Systems. All rights reserved.
             </span>
             <span className="footer-status">
               Status: Fully Integrated <span className="status-version">[v1.2.4-stable]</span>

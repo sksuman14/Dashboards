@@ -1073,3 +1073,76 @@ input[type="range"].custom-slider::-webkit-slider-thumb:hover {
     position: static;
   }
 }
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 36px;
+    letter-spacing: -1px;
+  }
+  .hero-subtitle {
+    font-size: 16px;
+  }
+  .hero-buttons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+  .virtual-device {
+    width: 220px;
+    height: 220px;
+  }
+  .circular-chamber {
+    width: 140px;
+    height: 140px;
+  }
+  .led-ring-glow {
+    width: 90px;
+    height: 90px;
+    border-width: 6px;
+  }
+  .device-value {
+    font-size: 16px;
+  }
+  .section-title {
+    font-size: 28px;
+  }
+  .metrics-cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  .metric-number {
+    font-size: 28px;
+  }
+  .sim-level-selector {
+    justify-content: center;
+  }
+  .level-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+  .device-details-title {
+    font-size: 22px;
+  }
+  .range-button-group {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .metrics-cards {
+    grid-template-columns: 1fr;
+  }
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  .spec-trigger-title {
+    font-size: 16px;
+  }
+  .spec-table td {
+    font-size: 13px;
+    padding: 8px 10px;
+  }
+}

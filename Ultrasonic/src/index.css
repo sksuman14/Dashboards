@@ -1622,7 +1622,34 @@ p {
   }
 }
 
+.chart-container {
+  flex: 1;
+  min-height: 350px;
+}
+
+.sandbox-physics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.specs-download-card {
+  margin-top: 2.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.75rem 2.5rem;
+}
+
 @media (max-width: 1024px) {
+  .chart-container {
+    flex: none;
+    height: 350px;
+  }
+
   .hero-section {
     grid-template-columns: 1fr;
     text-align: center;
@@ -1638,12 +1665,19 @@ p {
     align-items: center;
   }
 
+  .hero-cta-group {
+    justify-content: center;
+    width: 100%;
+  }
+
   .hero-subtitle {
     margin: 0 auto;
   }
 
   .hero-stats-row {
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.5rem;
   }
 
   .bento-grid {
@@ -1667,7 +1701,22 @@ p {
 
   .sidebar-panel {
     flex: none;
-    max-height: 350px;
+    max-height: none;
+    padding: 1rem 0;
+  }
+
+  .sidebar-list {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.5rem 1.5rem;
+    gap: 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .device-card {
+    flex: 0 0 240px;
+    padding: 0.85rem 1.15rem;
   }
 
   .detail-panel {
@@ -1686,6 +1735,13 @@ p {
 }
 
 @media (max-width: 768px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.75rem;
+  }
 
   .navbar-links,
   .navbar-actions {
@@ -1713,6 +1769,20 @@ p {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .specs-download-card {
+    flex-direction: column;
+    gap: 1.5rem;
+    text-align: center;
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .sandbox-physics-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1726,6 +1796,10 @@ p {
 
   .btn {
     width: 100%;
+  }
+
+  .hero-section {
+    padding: 2.5rem 1.25rem;
   }
 }
 
