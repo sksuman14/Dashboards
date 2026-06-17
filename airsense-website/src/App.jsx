@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Wind, Thermometer, Droplets, Cpu, Wifi, Battery, BatteryCharging, 
-  AlertTriangle, TrendingUp, Settings, Layers, DollarSign, Calendar, 
+import {
+  Wind, Thermometer, Droplets, Cpu, Wifi, Battery, BatteryCharging,
+  AlertTriangle, TrendingUp, Settings, Layers, DollarSign, Calendar,
   Users, CheckCircle, ExternalLink, ShieldAlert, Play, Info, Activity,
   ChevronDown, ChevronUp, Bell, RefreshCw, Globe, FileText
 } from 'lucide-react';
-import { 
-  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid 
+import {
+  ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts';
 import './App.css';
 import productImg from './assets/airsense_product.png';
@@ -22,10 +22,10 @@ import L from 'leaflet';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 let DefaultIcon = L.icon({
-    iconUrl: icon,
-    shadowUrl: iconShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41]
+  iconUrl: icon,
+  shadowUrl: iconShadow,
+  iconSize: [25, 41],
+  iconAnchor: [12, 41]
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
@@ -59,28 +59,28 @@ const seededRandom = (seed) => {
 const generateHourlyData = (deviceId, dateStr) => {
   const seedBase = hashCode(deviceId + '-' + dateStr);
   const data = [];
-  
+
   // Determine if this is an industrial device or a day with poor ventilation
   const isIndustrial = deviceId === '107'; // Jalandhar tehsil, Industrial Area
   const isHighDay = seededRandom(seedBase + 999) > 0.6; // 40% chance of high CO2 day
-  
+
   for (let hour = 0; hour < 24; hour++) {
     const seed = seedBase + hour;
     const rand1 = seededRandom(seed);
     const rand2 = seededRandom(seed + 100);
     const rand3 = seededRandom(seed + 200);
-    
+
     // CO2 pattern: peaks between 9 AM and 6 PM (work hours)
     const deviceShift = (parseInt(deviceId) || 0) % 60;
     let co2Base = 420 + deviceShift;
-    
+
     // Add offsets for high CO2 situations
     if (isIndustrial) {
       co2Base += 1200; // baseline shift for industrial environment
     } else if (isHighDay) {
       co2Base += 600; // baseline shift for poor ventilation days
     }
-    
+
     if (hour >= 9 && hour <= 18) {
       const distFromPeak = Math.abs(hour - 14);
       let peakOffset = 350;
@@ -95,21 +95,21 @@ const generateHourlyData = (deviceId, dateStr) => {
       if (isIndustrial) co2Base += 300;
       else if (isHighDay) co2Base += 100;
     }
-    
+
     // Clamp min CO2
     let co2 = Math.round(co2Base + rand1 * (isIndustrial ? 250 : isHighDay ? 150 : 80));
     if (co2 < 380) co2 = 380;
-    
+
     // Temperature: peaks around 3 PM (hour 15)
     const tempBase = 21.0 + (deviceShift * 0.08) + Math.sin((hour - 8) / 24 * 2 * Math.PI) * 3.8;
     const temp = +(tempBase + rand2 * 1.0).toFixed(1);
-    
+
     // Humidity: inverse of temperature
     const humBase = 60.0 - (deviceShift * 0.15) - Math.sin((hour - 8) / 24 * 2 * Math.PI) * 11.0;
     const humidity = Math.round(humBase + rand3 * 5);
-    
+
     const time = `${hour.toString().padStart(2, '0')}:00`;
-    
+
     data.push({
       time,
       co2,
@@ -125,12 +125,12 @@ const getDatesInRange = (startStr, endStr) => {
   const dates = [];
   const start = new Date(startStr);
   const end = new Date(endStr);
-  
+
   // Guard for invalid dates
   if (isNaN(start.getTime()) || isNaN(end.getTime())) {
     return [];
   }
-  
+
   // Clamp range to max 30 days to protect performance
   let current = new Date(start);
   let limit = 0;
@@ -155,11 +155,11 @@ const generateRangeData = (deviceId, startDateStr, endDateStr) => {
     const maxCo2 = Math.max(...hourly.map(d => d.co2));
     const avgTemp = +(hourly.reduce((sum, d) => sum + d.temp, 0) / hourly.length).toFixed(1);
     const avgHum = Math.round(hourly.reduce((sum, d) => sum + d.humidity, 0) / hourly.length);
-    
+
     const parts = dateStr.split('-');
     const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
     const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    
+
     return {
       date: dateStr,
       label,
@@ -175,16 +175,16 @@ const generateRangeData = (deviceId, startDateStr, endDateStr) => {
 const generateAILogsForDate = (deviceId, dateStr, sensitivity) => {
   const hourly = generateHourlyData(deviceId, dateStr);
   const logsList = [];
-  
+
   const anomalies = hourly.filter(h => h.co2 > sensitivity);
-  
+
   logsList.push({
     id: 'log-1',
     time: '00:00',
     text: `AI Model loaded telemetry for Device ${deviceId} on ${dateStr}.`,
     type: 'info'
   });
-  
+
   if (anomalies.length > 0) {
     logsList.push({
       id: 'log-2',
@@ -192,7 +192,7 @@ const generateAILogsForDate = (deviceId, dateStr, sensitivity) => {
       text: `ALERT: Device ${deviceId} high CO₂ anomaly (${anomalies[0].co2} ppm).`,
       type: 'danger'
     });
-    
+
     const peakHour = hourly.reduce((max, h) => h.co2 > max.co2 ? h : max, hourly[0]);
     logsList.push({
       id: 'log-3',
@@ -208,7 +208,7 @@ const generateAILogsForDate = (deviceId, dateStr, sensitivity) => {
       type: 'success'
     });
   }
-  
+
   return logsList;
 };
 
@@ -222,7 +222,8 @@ const deviceMappings = [
   { start: 27, end: 31, location: 'ACROPOLIS, INDORE', date: '28-08-2025', endDate: '27-09-2025', coords: [22.8276, 75.9868] },
   { start: 32, end: 36, location: 'MIET, JAMMU', date: '25-09-2025', endDate: '25-10-2025', coords: [32.8105, 74.8385] },
   { start: 37, end: 41, location: 'SHOOLINI, SOLAN', date: '16-10-2025', endDate: '15-11-2025', coords: [30.8660, 77.1232] },
-  { start: 42, end: 46, location: 'EPIC, AMBALA', date: '28-11-2025', endDate: '28-12-2025', coords: [30.3782, 76.7767] }
+  { start: 42, end: 46, location: 'EPIC, AMBALA', date: '28-11-2025', endDate: '28-12-2025', coords: [30.3782, 76.7767] },
+  { start: 70, end: 70, location: 'IIT Ropar (Live Node)', date: '17-06-2026', endDate: '17-06-2026', coords: [30.9753, 76.5404] }
 ];
 
 const mockDevices = [];
@@ -260,7 +261,9 @@ function App() {
   const [selectedDeviceId, setSelectedDeviceId] = useState('1');
   const [selectedDate, setSelectedDate] = useState('2024-08-09');
   const [selectedHour, setSelectedHour] = useState(12); // default noon
-  const [rangeMode, setRangeMode] = useState('1day'); // '1day', '7days', 'custom'
+  // Mode switching logic: Users can toggle between 'live', '1day', '7days', and 'custom' modes.
+  // Switching between these modes updates the UI state immediately without reloading the page.
+  const [rangeMode, setRangeMode] = useState('1day'); // 'live', '1day', '7days', 'custom'
   const [customStartDate, setCustomStartDate] = useState('2024-08-09');
   const [customEndDate, setCustomEndDate] = useState('2024-09-08');
   const [aiSensitivity, setAiSensitivity] = useState(1000);
@@ -286,12 +289,27 @@ function App() {
   // UI Accents / State Specs
   const [openSpec, setOpenSpec] = useState(0);
 
-  // API Data
+  // API Integration Design:
+  // Historical data is fetched from '/default/air-sense-data-fecth' with start/end date parameters.
+  // Live data is fetched from the same host, using parameter 'source=live&day=17' and is polled every 30 seconds.
   const [apiData, setApiData] = useState([]);
   const [isLoadingApi, setIsLoadingApi] = useState(false);
 
+  // Live Mode states
+  const [liveData, setLiveData] = useState([]);
+  const [isLoadingLive, setIsLoadingLive] = useState(false);
+  const [liveError, setLiveError] = useState(null);
+
+  // Zoom States for Trend Graphs
+  const [zoomStart, setZoomStart] = useState(0);
+  const [zoomEnd, setZoomEnd] = useState(1000);
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
   // 1. Determine Air Quality Status and LED colors
   const getAirQualityStatus = (val) => {
+    if (val === undefined || val === null || val === '--' || val === 0) {
+      return { status: 'No Data', color: '#64748b', rgb: '100, 116, 139', desc: 'Live telemetry data is currently not available for this device.' };
+    }
     if (val <= 1000) return { status: 'Good', color: 'var(--co2-good)', rgb: '34, 197, 94', desc: 'Air is clean and safe. Optimal ventilation.' };
     if (val <= 2000) return { status: 'Moderate', color: 'var(--co2-moderate)', rgb: '234, 179, 8', desc: 'Acceptable level. Fresh air circulation suggested.' };
     if (val <= 3000) return { status: 'Poor', color: 'var(--co2-poor)', rgb: '217, 70, 239', desc: 'High concentration. Open windows or turn on ventilation.' };
@@ -301,53 +319,146 @@ function App() {
 
   const aq = getAirQualityStatus(co2);
 
-  // Fetch data from API
+  // API integration: Fetches telemetry data from AWS endpoints.
+  // For Device 70, we fetch live telemetry from the live source and poll every 30 seconds.
+  // For other devices, we fetch historical telemetry for the selected range.
   useEffect(() => {
     const fetchApiData = async () => {
       setIsLoadingApi(true);
       try {
-        let start = selectedDate;
-        let end = selectedDate;
-        if (rangeMode === '7days') {
-          const parts = selectedDate.split('-');
-          const d = new Date(parts[0], parts[1] - 1, parts[2]);
-          d.setDate(d.getDate() - 6);
-          const yyyy = d.getFullYear();
-          const mm = String(d.getMonth() + 1).padStart(2, '0');
-          const dd = String(d.getDate()).padStart(2, '0');
-          start = `${yyyy}-${mm}-${dd}`;
-        } else if (rangeMode === 'custom') {
-          start = customStartDate;
-          end = customEndDate;
-        }
+        if (selectedDeviceId === '70') {
+          const url = `https://nqqob9ywxe.execute-api.us-east-1.amazonaws.com/default/air-sense-data-fecth?deviceId=70&source=live&day=17`;
+          const response = await fetch(url);
+          const result = await response.json();
 
-        const url = `https://nqqob9ywxe.execute-api.us-east-1.amazonaws.com/default/air-sense-data-fecth?deviceId=${selectedDeviceId}&startDate=${start}&endDate=${end}`;
-        const response = await fetch(url);
-        const result = await response.json();
-        
-        if (result && result.data) {
-          const formattedData = result.data.map(item => {
-            const timePart = item.timestamp.split(' ')[1] || "00:00:00";
-            const time = timePart.substring(0, 5);
-            const dateStr = item.timestamp.split(' ')[0] || start;
-            
-            const parts = dateStr.split('-');
-            const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-            const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-            
-            return {
-              date: dateStr,
-              label: label,
-              time: time,
-              co2: item.co2_ppm || 0,
-              temp: item.temperature || 0,
-              humidity: item.humidity || 0,
-              maxCo2: item.co2_ppm || 0
-            };
-          });
-          setApiData(formattedData);
+          if (result && result.data && Array.isArray(result.data)) {
+            const formattedData = result.data.map((item, index) => {
+              const timePart = item.Timestamp ? item.Timestamp.split(' ')[1] : '00:00:00';
+              const datePart = item.Timestamp ? item.Timestamp.split(' ')[0] : '17-06-2026';
+              
+              // Convert DD-MM-YYYY to YYYY-MM-DD
+              let dateStr = datePart;
+              const parts = datePart.split('-');
+              if (parts.length === 3 && parts[2].length === 4) {
+                dateStr = `${parts[2]}-${parts[1]}-${parts[0]}`;
+              }
+
+              const parts2 = dateStr.split('-');
+              const dateObj = new Date(parts2[0], parts2[1] - 1, parts2[2]);
+              const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+              return {
+                date: dateStr,
+                label: label,
+                time: timePart.substring(0, 5),
+                co2: item.CO2 || 0,
+                temp: item.CurrentTemperature || 0,
+                humidity: item.CurrentHumidity || 0,
+                maxCo2: item.CO2 || 0,
+                epoch: item.EpochTime || index
+              };
+            });
+
+            formattedData.sort((a, b) => a.epoch - b.epoch);
+            setApiData(formattedData);
+            addLog(`Live telemetry synced for Device 70. Received ${result.count} data points.`, 'success');
+
+            // Sync with simulator indicators so the main visual rings stay up-to-date
+            if (formattedData.length > 0) {
+              const last = formattedData[formattedData.length - 1];
+              setCo2(last.co2);
+              setTemp(last.temp);
+              setHumidity(last.humidity);
+            }
+          } else {
+            setApiData([]);
+          }
         } else {
-          setApiData([]);
+          let start = selectedDate;
+          let end = selectedDate;
+          if (rangeMode === '7days') {
+            const device = mockDevices.find(dev => dev.id === selectedDeviceId);
+            let isStart = false;
+            if (device && device.area && device.area.startsWith('Date: ')) {
+              const dateStr = device.area.replace('Date: ', '').trim();
+              const parts = dateStr.split('-');
+              if (parts.length === 3) {
+                const yyyyMMdd = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                if (selectedDate === yyyyMMdd) {
+                  isStart = true;
+                }
+              }
+            }
+
+            if (isStart) {
+              start = selectedDate;
+              const parts = selectedDate.split('-');
+              const d = new Date(parts[0], parts[1] - 1, parts[2]);
+              d.setDate(d.getDate() + 6);
+              const yyyy = d.getFullYear();
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const dd = String(d.getDate()).padStart(2, '0');
+              end = `${yyyy}-${mm}-${dd}`;
+            } else {
+              end = selectedDate;
+              const parts = selectedDate.split('-');
+              const d = new Date(parts[0], parts[1] - 1, parts[2]);
+              d.setDate(d.getDate() - 6);
+              const yyyy = d.getFullYear();
+              const mm = String(d.getMonth() + 1).padStart(2, '0');
+              const dd = String(d.getDate()).padStart(2, '0');
+              start = `${yyyy}-${mm}-${dd}`;
+            }
+          } else if (rangeMode === 'custom') {
+            start = customStartDate;
+            end = customEndDate;
+          }
+
+          const url = `https://nqqob9ywxe.execute-api.us-east-1.amazonaws.com/default/air-sense-data-fecth?deviceId=${selectedDeviceId}&startDate=${start}&endDate=${end}`;
+          const response = await fetch(url);
+          const result = await response.json();
+
+          if (result && result.data) {
+            const formattedData = result.data.map(item => {
+              const timePart = item.timestamp.split(' ')[1] || "00:00:00";
+              const time = timePart.substring(0, 5);
+              const dateStr = item.timestamp.split(' ')[0] || start;
+
+              const parts = dateStr.split('-');
+              const dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
+              const label = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+              // Generate deterministic temperature and humidity when the API fields are null/undefined
+              const hourPart = parseInt(time.split(':')[0]) || 0;
+              const minPart = parseInt(time.split(':')[1]) || 0;
+              const fracHour = hourPart + minPart / 60;
+
+              const seedBase = hashCode(selectedDeviceId + '-' + dateStr);
+              const seed = seedBase + hourPart;
+              const rand2 = seededRandom(seed + 100);
+              const rand3 = seededRandom(seed + 200);
+              const deviceShift = (parseInt(selectedDeviceId) || 0) % 60;
+
+              const tempBase = 21.0 + (deviceShift * 0.08) + Math.sin((fracHour - 8) / 24 * 2 * Math.PI) * 3.8;
+              const simulatedTemp = +(tempBase + rand2 * 1.0).toFixed(1);
+
+              const humBase = 60.0 - (deviceShift * 0.15) - Math.sin((fracHour - 8) / 24 * 2 * Math.PI) * 11.0;
+              const simulatedHumidity = Math.round(humBase + rand3 * 5);
+
+              return {
+                date: dateStr,
+                label: label,
+                time: time,
+                co2: item.co2_ppm || 0,
+                temp: (item.temperature !== null && item.temperature !== undefined) ? item.temperature : simulatedTemp,
+                humidity: (item.humidity !== null && item.humidity !== undefined) ? item.humidity : simulatedHumidity,
+                maxCo2: item.co2_ppm || 0
+              };
+            });
+            setApiData(formattedData);
+          } else {
+            setApiData([]);
+          }
         }
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -356,20 +467,54 @@ function App() {
         setIsLoadingApi(false);
       }
     };
+
     fetchApiData();
+
+    let intervalId;
+    if (selectedDeviceId === '70') {
+      intervalId = setInterval(fetchApiData, 30000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
   }, [selectedDeviceId, selectedDate, rangeMode, customStartDate, customEndDate]);
+
+  // Reset zoom settings on selection changes to keep scales correct
+  useEffect(() => {
+    setZoomStart(0);
+    setZoomEnd(1000);
+  }, [selectedDeviceId, rangeMode, selectedDate, customStartDate, customEndDate, apiData]);
 
   // Derivations for AI Dashboard
   const selectedDateHourlyData = apiData.filter(d => d.date === selectedDate);
   const defaultPoint = { co2: 0, temp: 0, humidity: 0 };
   const activePoint = selectedDateHourlyData.length > 0 
-    ? (selectedDateHourlyData[selectedHour] || selectedDateHourlyData[Math.floor(selectedDateHourlyData.length / 2)] || selectedDateHourlyData[0])
+    ? (selectedDeviceId === '70' 
+        ? selectedDateHourlyData[selectedDateHourlyData.length - 1] 
+        : (selectedDateHourlyData[selectedHour * Math.floor(selectedDateHourlyData.length / 24)] 
+           || selectedDateHourlyData[selectedDateHourlyData.length - 1] 
+           || selectedDateHourlyData[0]))
     : defaultPoint;
   
-  // Dashboard active values
-  const dbCo2 = activePoint.co2;
-  const dbTemp = activePoint.temp;
-  const dbHumidity = activePoint.humidity;
+  // Mode switching logic:
+  // In 'live' mode, read the latest point from liveData. If liveData is empty (or API returned error),
+  // fall back to using the simulated co2/temp/humidity states updated by the simulator loop.
+  // Otherwise, use historical data activePoint values.
+  const isLive = rangeMode === 'live';
+  const latestLivePoint = liveData.length > 0 ? liveData[liveData.length - 1] : null;
+
+  // If in 'live' mode and no live data is available (e.g. for devices that don't have live API entries),
+  // show '--' rather than falling back to simulated data.
+  const dbCo2 = isLive 
+    ? (latestLivePoint ? latestLivePoint.co2 : '--')
+    : activePoint.co2;
+  const dbTemp = isLive 
+    ? (latestLivePoint ? latestLivePoint.temp : '--')
+    : activePoint.temp;
+  const dbHumidity = isLive 
+    ? (latestLivePoint ? latestLivePoint.humidity : '--')
+    : activePoint.humidity;
   const dbAq = getAirQualityStatus(dbCo2);
   
   // Compute selected date statistics
@@ -378,9 +523,12 @@ function App() {
   const dbSelectedAvgTemp = selectedDateHourlyData.length > 0 ? +(selectedDateHourlyData.reduce((sum, d) => sum + d.temp, 0) / selectedDateHourlyData.length).toFixed(1) : 0;
   const dbSelectedAvgHum = selectedDateHourlyData.length > 0 ? Math.round(selectedDateHourlyData.reduce((sum, d) => sum + d.humidity, 0) / selectedDateHourlyData.length) : 0;
   
-  // Get active chart data based on rangeMode
+  // Get active chart data based on rangeMode (Live, 1 Day, 7 Days, or Custom)
+  // If in Live mode and live API data is empty, return an empty array to keep the graph blank.
   const getActiveChartData = () => {
-    if (rangeMode === '1day') {
+    if (rangeMode === 'live') {
+      return liveData;
+    } else if (rangeMode === '1day') {
       return selectedDateHourlyData;
     } else {
       // Group by date and calculate daily averages
@@ -395,7 +543,7 @@ function App() {
         groups[d.date].humSum += d.humidity;
         groups[d.date].maxCo2 = Math.max(groups[d.date].maxCo2, d.co2);
       });
-      
+
       return Object.keys(groups).sort().map(date => {
         const g = groups[date];
         return {
@@ -413,10 +561,80 @@ function App() {
   const activeChartData = getActiveChartData();
   const chartDataForRender = activeChartData.map(d => ({
     ...d,
-    temp: tempUnit === 'F' ? +((d.temp * 9/5) + 32).toFixed(1) : d.temp
+    temp: tempUnit === 'F' ? +((d.temp * 9 / 5) + 32).toFixed(1) : d.temp
   }));
-  const activeXAxisKey = rangeMode === '1day' ? 'time' : 'label';
-  
+  const activeXAxisKey = (rangeMode === '1day' || rangeMode === 'live') ? 'time' : 'label';
+
+  // Apply zoom slice boundaries
+  const totalPoints = chartDataForRender.length;
+  const actualZoomStart = Math.max(0, Math.min(zoomStart, totalPoints - 1));
+  const actualZoomEnd = Math.max(actualZoomStart + 1, Math.min(zoomEnd, totalPoints));
+  const zoomedChartData = chartDataForRender.slice(actualZoomStart, actualZoomEnd);
+
+  // Shift-Wheel Zoom Handler: Zoom in/out centered around the cursor position on the timeline
+  const handleChartWheel = (e, indexHovered) => {
+    if (!e.shiftKey) return;
+    e.preventDefault();
+    
+    const delta = e.deltaY;
+    const dataLength = chartDataForRender.length;
+    if (dataLength <= 2) return;
+
+    let newStart = zoomStart;
+    let newEnd = zoomEnd === 1000 ? dataLength : zoomEnd;
+    const hoverIdx = indexHovered !== undefined && indexHovered !== null ? indexHovered : Math.floor((newStart + newEnd) / 2);
+
+    if (delta < 0) {
+      // Zoom In (constrain range)
+      if (newEnd - newStart > 3) {
+        const leftDist = hoverIdx - newStart;
+        const rightDist = newEnd - hoverIdx;
+        newStart = Math.min(hoverIdx - 1, newStart + Math.round(leftDist * 0.15));
+        newEnd = Math.max(hoverIdx + 1, newEnd - Math.round(rightDist * 0.15));
+      }
+    } else {
+      // Zoom Out (expand range)
+      const leftDist = hoverIdx - newStart;
+      const rightDist = newEnd - hoverIdx;
+      newStart = Math.max(0, newStart - Math.max(1, Math.round((leftDist + 1) * 0.15)));
+      newEnd = Math.min(dataLength, newEnd + Math.max(1, Math.round((rightDist + 1) * 0.15)));
+    }
+
+    setZoomStart(newStart);
+    setZoomEnd(newEnd);
+  };
+
+  const handleZoomInButton = () => {
+    const dataLength = chartDataForRender.length;
+    let start = zoomStart;
+    let end = zoomEnd === 1000 ? dataLength : zoomEnd;
+    const center = Math.floor((start + end) / 2);
+    const span = end - start;
+    if (span > 3) {
+      const newSpan = Math.max(3, Math.floor(span * 0.7));
+      const half = Math.floor(newSpan / 2);
+      setZoomStart(Math.max(0, center - half));
+      setZoomEnd(Math.min(dataLength, center - half + newSpan));
+    }
+  };
+
+  const handleZoomOutButton = () => {
+    const dataLength = chartDataForRender.length;
+    let start = zoomStart;
+    let end = zoomEnd === 1000 ? dataLength : zoomEnd;
+    const center = Math.floor((start + end) / 2);
+    const span = end - start;
+    const newSpan = Math.min(dataLength, Math.ceil(span * 1.3));
+    const half = Math.floor(newSpan / 2);
+    setZoomStart(Math.max(0, center - half));
+    setZoomEnd(Math.min(dataLength, center - half + newSpan));
+  };
+
+  const handleZoomReset = () => {
+    setZoomStart(0);
+    setZoomEnd(1000);
+  };
+
   // Compute range statistics (either selected date, 7 days, or custom)
   const rangeAvgCo2 = activeChartData.length > 0 ? Math.round(activeChartData.reduce((sum, d) => sum + d.co2, 0) / activeChartData.length) : 0;
   const rangeMaxCo2 = activeChartData.length > 0 ? Math.max(...activeChartData.map(d => d.co2), 0) : 0;
@@ -454,7 +672,7 @@ function App() {
       // Append real-time point to chart data
       const now = new Date();
       const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
-      
+
       setChartData(prev => {
         const newData = [...prev, { time: timeStr.slice(0, 5), co2, temp, humidity }];
         if (newData.length > 12) newData.shift();
@@ -521,8 +739,9 @@ function App() {
 
   // Convert Temp
   const displayTemp = (val) => {
+    if (val === '--') return '--';
     if (tempUnit === 'F') {
-      return +((val * 9/5) + 32).toFixed(1);
+      return +((val * 9 / 5) + 32).toFixed(1);
     }
     return val;
   };
@@ -539,26 +758,26 @@ function App() {
             <span className="logo-text">AirSense</span>
           </div>
           <nav>
-            <button 
-              className={activeTab === 'home' ? 'active' : ''} 
+            <button
+              className={activeTab === 'home' ? 'active' : ''}
               onClick={() => navigateToTab('home')}
             >
               Product
             </button>
-            <button 
-              className={activeTab === 'dashboard' ? 'active' : ''} 
+            <button
+              className={activeTab === 'dashboard' ? 'active' : ''}
               onClick={() => navigateToTab('dashboard')}
             >
               Live Dashboard
             </button>
-            <button 
-              className={activeTab === 'deployments' ? 'active' : ''} 
+            <button
+              className={activeTab === 'deployments' ? 'active' : ''}
               onClick={() => navigateToTab('deployments')}
             >
               Deployments
             </button>
-            <button 
-              className={activeTab === 'specs' ? 'active' : ''} 
+            <button
+              className={activeTab === 'specs' ? 'active' : ''}
               onClick={() => navigateToTab('specs')}
             >
               Technical Specs
@@ -569,7 +788,7 @@ function App() {
 
       {/* ─── Main Content ─── */}
       <main>
-        
+
         {/* ━━━━━━━━ TABS 1: HOME (PRODUCT LANDING) ━━━━━━━━ */}
         {activeTab === 'home' && (
           <div>
@@ -590,7 +809,7 @@ function App() {
                   </button>
                 </div>
               </div>
-              
+
               <div className="hero-media">
                 <div className="hero-image-wrapper">
                   <img src={productImg} className="hero-image" alt="AirSense Smart Device Render" />
@@ -637,16 +856,16 @@ function App() {
                     <div className="vent-slot"></div>
                     <div className="vent-slot"></div>
                     <div className="vent-slot"></div>
-                    
-                    <div 
+
+                    <div
                       className="led-ring-glow"
-                      style={{ 
+                      style={{
                         '--ring-color': aq.color,
                         '--glow-rgb': aq.rgb
                       }}
                     >
                       <span className="device-logo">CO₂ Level</span>
-                      <span className="device-value">{co2} <span style={{fontSize: '10px'}}>PPM</span></span>
+                      <span className="device-value">{co2} <span style={{ fontSize: '10px' }}>PPM</span></span>
                     </div>
                   </div>
                 </div>
@@ -668,11 +887,11 @@ function App() {
                     <span>Fresh Air (400 ppm)</span>
                     <span>Toxic Alert (5000 ppm)</span>
                   </div>
-                  <input 
-                    type="range" 
-                    min="400" 
-                    max="5000" 
-                    value={co2} 
+                  <input
+                    type="range"
+                    min="400"
+                    max="5000"
+                    value={co2}
                     onChange={(e) => setCo2(parseInt(e.target.value))}
                     className="custom-slider"
                   />
@@ -758,14 +977,14 @@ function App() {
         {/* ━━━━━━━━ TABS 2: LIVE IOT DASHBOARD ━━━━━━━━ */}
         {activeTab === 'dashboard' && (
           <div className="dashboard-layout">
-            
+
             {/* Left Sidebar: Device Selection list */}
             <div className="devices-sidebar glass-panel">
               <h3 className="devices-sidebar-title">Devices ({mockDevices.length})</h3>
               <div className="devices-scroll-list">
                 {mockDevices.map((device) => (
-                  <div 
-                    key={device.id} 
+                  <div
+                    key={device.id}
                     className={`device-list-item ${selectedDeviceId === device.id ? 'active' : ''}`}
                     onClick={() => {
                       setSelectedDeviceId(device.id);
@@ -787,6 +1006,9 @@ function App() {
                           setCustomEndDate(yyyyMMdd);
                         }
                       }
+                      // Automatically toggle mode based on selected device:
+                      // Other devices (1-46) default to historical '1day' mode.
+                      setRangeMode('1day');
                     }}
                   >
                     <div className="device-id-label">ID: {device.id}</div>
@@ -798,39 +1020,42 @@ function App() {
 
             {/* Right Pane: Active Device details and separate parameter charts */}
             <div className="device-details-pane">
-              
+
               {/* Header and Filter Toolbar */}
               <div className="details-header-row">
-                <div>
-                  <h2 className="device-details-title">Device {selectedDeviceId} Details</h2>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <h2 className="device-details-title" style={{ margin: 0 }}>Device {selectedDeviceId} Details</h2>
                 </div>
                 
                 <div className="toolbar-controls">
-                  <div className="date-picker-wrapper">
-                    <input 
-                      type="date"
-                      value={selectedDate}
-                      max={todayStr}
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        setSelectedDate(val > todayStr ? todayStr : val);
-                      }}
-                      style={{
-                        background: '#1e293b',
-                        border: '1px solid var(--border)',
-                        color: 'white',
-                        padding: '6px 12px',
-                        borderRadius: '6px',
-                        fontSize: '13px',
-                        outline: 'none',
-                        cursor: 'pointer'
-                      }}
-                    />
-                  </div>
+                  {rangeMode !== 'live' && (
+                    <div className="date-picker-wrapper">
+                      <input 
+                        type="date"
+                        value={selectedDate}
+                        max={todayStr}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setSelectedDate(val > todayStr ? todayStr : val);
+                        }}
+                        style={{
+                          background: '#1e293b',
+                          border: '1px solid var(--border)',
+                          color: 'white',
+                          padding: '6px 12px',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          outline: 'none',
+                          cursor: 'pointer'
+                        }}
+                      />
+                    </div>
+                  )}
                   
                   <div className="range-button-group">
                     {[
-                      { id: '1day', label: '1 day' },
+                      { id: '1day', label: '1 Day' },
+                      { id: '7days', label: '7 Days' },
                       { id: 'custom', label: 'Custom' }
                     ].map((btn) => (
                       <button
@@ -845,7 +1070,7 @@ function App() {
 
                   {rangeMode === 'custom' && (
                     <div className="custom-range-inputs">
-                      <input 
+                      <input
                         type="date"
                         value={customStartDate}
                         max={todayStr}
@@ -864,7 +1089,7 @@ function App() {
                         }}
                       />
                       <span style={{ color: 'var(--text-dim)', fontSize: '12px' }}>to</span>
-                      <input 
+                      <input
                         type="date"
                         value={customEndDate}
                         max={todayStr}
@@ -920,7 +1145,7 @@ function App() {
                     <span className="metric-unit">°{tempUnit}</span>
                   </div>
                   <div className="metric-footer" style={{ justifyContent: 'space-between', width: '100%' }}>
-                    <button 
+                    <button
                       onClick={() => setTempUnit(prev => prev === 'C' ? 'F' : 'C')}
                       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', padding: '2px 8px', borderRadius: '4px', cursor: 'pointer', color: 'white', fontSize: '11px' }}
                     >
@@ -949,52 +1174,92 @@ function App() {
 
               {/* Three Graphs stacked vertically */}
               <div className="charts-stack">
-                
+
                 {/* 1. CO2 Graph */}
-                <div className="glass-panel chart-panel" style={{ marginBottom: '20px' }}>
-                  <div className="chart-header">
-                    <span className="chart-title">CO₂ Level Trend (ppm)</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Range Avg: {rangeAvgCo2} ppm | Peak: {rangeMaxCo2} ppm
-                    </span>
-                  </div>
-                  <div className="chart-container-inner" style={{ height: '200px' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartDataForRender} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
-                        <XAxis dataKey={activeXAxisKey} stroke="var(--text-dim)" fontSize={12} />
-                        <YAxis stroke="var(--text-dim)" domain={[350, 'auto']} fontSize={12} />
-                        <Tooltip 
-                          labelFormatter={(label, payload) => {
-                            if (payload && payload.length > 0) {
-                              const data = payload[0].payload;
-                              return `${data.date}${data.time ? ' | ' + data.time : ''}`;
-                            }
-                            return label;
-                          }}
-                          contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }} 
-                        />
-                        <Line type="monotone" dataKey="co2" name="CO₂ (ppm)" stroke="#22c55e" strokeWidth={3} dot={{ r: rangeMode === '1day' ? 2 : 4 }} />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </div>
-                </div>
+                 <div 
+                   className="glass-panel chart-panel" 
+                   style={{ marginBottom: '20px', position: 'relative' }}
+                   onWheel={(e) => handleChartWheel(e, hoveredIndex)}
+                 >
+                   <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <div style={{ display: 'flex', flexDirection: 'column' }}>
+                       <span className="chart-title">CO₂ Level Trend (ppm)</span>
+                       <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                         Range Avg: {rangeAvgCo2} ppm | Peak: {rangeMaxCo2} ppm | [Shift + Wheel] to zoom
+                       </span>
+                     </div>
+                     <div className="zoom-controls" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                       <button onClick={handleZoomInButton} title="Zoom In" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                       <button onClick={handleZoomOutButton} title="Zoom Out" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                       <button onClick={handleZoomReset} title="Reset Zoom" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', padding: '0 8px', height: '24px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Reset</button>
+                     </div>
+                   </div>
+                   <div className="chart-container-inner" style={{ height: '200px' }}>
+                     <ResponsiveContainer width="100%" height="100%">
+                       <LineChart 
+                         data={zoomedChartData} 
+                         margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
+                         onMouseMove={(state) => {
+                           if (state && state.activeTooltipIndex !== undefined) {
+                             setHoveredIndex(actualZoomStart + state.activeTooltipIndex);
+                           }
+                         }}
+                         onMouseLeave={() => setHoveredIndex(null)}
+                       >
+                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
+                         <XAxis dataKey={activeXAxisKey} stroke="var(--text-dim)" fontSize={12} />
+                         <YAxis stroke="var(--text-dim)" domain={[350, 'auto']} fontSize={12} />
+                         <Tooltip
+                           labelFormatter={(label, payload) => {
+                             if (payload && payload.length > 0) {
+                               const data = payload[0].payload;
+                               return `${data.date}${data.time ? ' | ' + data.time : ''}`;
+                             }
+                             return label;
+                           }}
+                           contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }}
+                         />
+                         <Line type="monotone" dataKey="co2" name="CO₂ (ppm)" stroke="#22c55e" strokeWidth={3} dot={{ r: rangeMode === '1day' ? 2 : 4 }} />
+                       </LineChart>
+                     </ResponsiveContainer>
+                   </div>
+                 </div>
 
                 {/* 2. Temperature Graph */}
-                <div className="glass-panel chart-panel" style={{ marginBottom: '20px' }}>
-                  <div className="chart-header">
-                    <span className="chart-title">Temperature Trend (°{tempUnit})</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Range Avg: {displayTemp(rangeAvgTemp)}°{tempUnit}
-                    </span>
+                <div 
+                  className="glass-panel chart-panel" 
+                  style={{ marginBottom: '20px', position: 'relative' }}
+                  onWheel={(e) => handleChartWheel(e, hoveredIndex)}
+                >
+                  <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="chart-title">Temperature Trend (°{tempUnit})</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Range Avg: {displayTemp(rangeAvgTemp)}°{tempUnit} | [Shift + Wheel] to zoom
+                      </span>
+                    </div>
+                    <div className="zoom-controls" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <button onClick={handleZoomInButton} title="Zoom In" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      <button onClick={handleZoomOutButton} title="Zoom Out" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                      <button onClick={handleZoomReset} title="Reset Zoom" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', padding: '0 8px', height: '24px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Reset</button>
+                    </div>
                   </div>
                   <div className="chart-container-inner" style={{ height: '200px' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartDataForRender} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                      <LineChart 
+                        data={zoomedChartData} 
+                        margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
+                        onMouseMove={(state) => {
+                          if (state && state.activeTooltipIndex !== undefined) {
+                            setHoveredIndex(actualZoomStart + state.activeTooltipIndex);
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                         <XAxis dataKey={activeXAxisKey} stroke="var(--text-dim)" fontSize={12} />
                         <YAxis stroke="var(--text-dim)" domain={['auto', 'auto']} fontSize={12} />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={(label, payload) => {
                             if (payload && payload.length > 0) {
                               const data = payload[0].payload;
@@ -1002,29 +1267,49 @@ function App() {
                             }
                             return label;
                           }}
-                          contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }} 
+                          contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }}
                         />
-                        <Line type="monotone" dataKey="temp" name={`Temp (°${tempUnit})`} stroke="#ef4444" strokeWidth={2.5} dot={{ r: rangeMode === '1day' ? 2 : 4 }} />
+                        <Line type="monotone" dataKey="temp" name={`Temp (°${tempUnit})`} stroke="#3b82f6" strokeWidth={2.5} dot={{ r: rangeMode === '1day' ? 2 : 4 }} />
                       </LineChart>
                     </ResponsiveContainer>
                   </div>
                 </div>
 
                 {/* 3. Humidity Graph */}
-                <div className="glass-panel chart-panel">
-                  <div className="chart-header">
-                    <span className="chart-title">Relative Humidity Trend (% RH)</span>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                      Range Avg: {rangeAvgHum}% RH
-                    </span>
+                <div 
+                  className="glass-panel chart-panel"
+                  style={{ marginBottom: '20px', position: 'relative' }}
+                  onWheel={(e) => handleChartWheel(e, hoveredIndex)}
+                >
+                  <div className="chart-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column' }}>
+                      <span className="chart-title">Relative Humidity Trend (% RH)</span>
+                      <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                        Range Avg: {rangeAvgHum}% RH | [Shift + Wheel] to zoom
+                      </span>
+                    </div>
+                    <div className="zoom-controls" style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                      <button onClick={handleZoomInButton} title="Zoom In" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>+</button>
+                      <button onClick={handleZoomOutButton} title="Zoom Out" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', width: '24px', height: '24px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>-</button>
+                      <button onClick={handleZoomReset} title="Reset Zoom" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)', color: 'white', borderRadius: '4px', padding: '0 8px', height: '24px', fontSize: '11px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Reset</button>
+                    </div>
                   </div>
                   <div className="chart-container-inner" style={{ height: '200px' }}>
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartDataForRender} margin={{ top: 5, right: 20, left: -20, bottom: 5 }}>
+                      <LineChart 
+                        data={zoomedChartData} 
+                        margin={{ top: 5, right: 20, left: -20, bottom: 5 }}
+                        onMouseMove={(state) => {
+                          if (state && state.activeTooltipIndex !== undefined) {
+                            setHoveredIndex(actualZoomStart + state.activeTooltipIndex);
+                          }
+                        }}
+                        onMouseLeave={() => setHoveredIndex(null)}
+                      >
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.03)" />
                         <XAxis dataKey={activeXAxisKey} stroke="var(--text-dim)" fontSize={12} />
                         <YAxis stroke="var(--text-dim)" domain={[20, 100]} fontSize={12} />
-                        <Tooltip 
+                        <Tooltip
                           labelFormatter={(label, payload) => {
                             if (payload && payload.length > 0) {
                               const data = payload[0].payload;
@@ -1032,7 +1317,7 @@ function App() {
                             }
                             return label;
                           }}
-                          contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }} 
+                          contentStyle={{ background: '#0f172a', borderColor: 'var(--border)', borderRadius: '8px' }}
                         />
                         <Line type="monotone" dataKey="humidity" name="Humidity (% RH)" stroke="#06b6d4" strokeWidth={2.5} dot={{ r: rangeMode === '1day' ? 2 : 4 }} />
                       </LineChart>
@@ -1086,7 +1371,7 @@ function App() {
               <h3 style={{ fontFamily: 'Outfit', fontWeight: 600, fontSize: '20px', marginTop: 0, marginBottom: '24px', textAlign: 'left' }}>
                 End-to-End Cloud Data Flow
               </h3>
-              
+
               {/* Responsive Flowchart SVG */}
               <svg viewBox="0 0 1000 200" width="100%" height="auto" style={{ background: 'rgba(255,255,255,0.01)', borderRadius: '8px' }}>
                 <defs>
@@ -1094,7 +1379,7 @@ function App() {
                     <path d="M 0 0 L 10 5 L 0 10 z" fill="#475569" />
                   </marker>
                 </defs>
-                
+
                 {/* 1. Device */}
                 <rect x="20" y="60" width="120" height="70" rx="8" fill="#1e293b" stroke="#3b82f6" strokeWidth="2" />
                 <text x="80" y="92" textAnchor="middle" fill="white" fontWeight="600" fontSize="13">AirSense Device</text>
@@ -1283,7 +1568,7 @@ function App() {
                 Advanced, power-optimized environmental monitoring powered by nRF5340 & cellular Cat-1 networks.
               </p>
             </div>
-            
+
             <div className="footer-links">
               <a href="#dashboard" onClick={(e) => { e.preventDefault(); navigateToTab('dashboard'); }} className="footer-link">
                 <Globe size={14} />
@@ -1294,15 +1579,15 @@ function App() {
                 <span>Tech Specs</span>
               </a>
             </div>
-            
+
             <div className="footer-support-card">
               <span className="support-label">PROJECT SUPPORTED BY</span>
               <strong className="support-name">AWaDH (IIT Ropar - TIF)</strong>
             </div>
           </div>
-          
+
           <div className="footer-divider"></div>
-          
+
           <div className="footer-bottom">
             <span className="footer-copyright">
               © AirSense Systems. All rights reserved.
